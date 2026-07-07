@@ -4,9 +4,9 @@
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-integration-41BDF5?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
 [![GitHub stars](https://img.shields.io/github/stars/jjohnsen/esphome-altherma)](https://github.com/jjohnsen/esphome-altherma/stargazers)
 
-A native [ESPHome](https://esphome.io/) custom component for monitoring Daikin Altherma 3 heat pumps via the X10A connector. It exposes temperatures, voltages, currents, and other operational data directly to [Home Assistant](https://www.home-assistant.io/). No MQTT, no manual config, just plug and play.
+A native [ESPHome](https://esphome.io/) custom component for monitoring Daikin Altherma 3 heat pumps via the X10A connector. It exposes temperatures, voltages, currents, and other operational data [...]
 
-🌐 [Web Installer](https://esphome-altherma.jjohnsen.no) · 💬 [HA Community](https://community.home-assistant.io/t/esphome-altherma-monitor-your-daikin-altherma-3-heat-pump-via-x10a/1000476) · 🗨️ [Discussions](https://github.com/jjohnsen/esphome-altherma/discussions) · 📖 [Emoncms Setup Guide](https://jjohnsen.no/2026/esphome-altherma-emoncms-setup-guide/)
+🌐 [Web Installer](https://esphome-altherma.jjohnsen.no) · 💬 [HA Community](https://community.home-assistant.io/t/esphome-altherma-monitor-your-daikin-altherma-3-heat-pump-via-x10a/1000476) […]
 
 ![M5stack Running ESPHome Altherma](img/esphome-altherma-m5stack.jpg)  
 M5Stack Basic running ESPHome Altherma
@@ -32,7 +32,7 @@ No command line needed. See [Installation](#installation) for more options.
 
 - **Real-time sensor data** - temperatures, voltages, currents, flow rates, pressures, fan speeds, and more
 - **Model-specific configuration** via modular YAML files for different Altherma units
-- **Multiple board support** - ESP32, ESP32-S3, and M5Stack AtomS3 Lite
+- **Multiple board support** - ESP32, ESP32-S3, M5Stack AtomS3 Lite, and M5StickC Plus2
 - **Browser-based installation** via [ESP Web Tools](https://esphome.github.io/esp-web-tools/) (no command line needed)
 - **OTA updates** with automatic update checking via GitHub releases
 - **Mock UART mode** for development and testing without hardware
@@ -44,6 +44,7 @@ No command line needed. See [Installation](#installation) for more options.
 | [ESP32 DevKit](https://www.espboards.dev/esp32/esp32doit-devkit-v1/) | `esphome-altherma-esp32.yaml` | GPIO 16 | GPIO 17 |
 | [ESP32-S3 DevKit](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/) | `esphome-altherma-esp32-s3.yaml` | GPIO 2 | GPIO 1 |
 | [M5Stack AtomS3 Lite](https://docs.m5stack.com/en/core/AtomS3%20Lite) | `esphome-altherma-atoms3.yaml` | GPIO 2 (G1) | GPIO 1 (G2) |
+| [M5StickC Plus2](https://docs.m5stack.com/en/core/m5stickc_plus2) | `esphome-altherma-m5stickc-plus2.yaml` | GPIO 32 (G32) | GPIO 33 (G33) |
 
 ## Hardware Requirements
 
@@ -55,15 +56,17 @@ No command line needed. See [Installation](#installation) for more options.
 
 Connect the ESP32 to the Altherma unit using the X10A connector:
 
-| X10A Pin | Signal | ESP32 DevKit | M5Stack AtomS3 Lite / ESP32-S3 |
-| -- | -- | -- | -- |
-| 1 | 5V | 5V / VIN | 5V |
-| 2 | TX (pump → ESP) | RX pin (GPIO 16) | RX pin (GPIO 2) |
-| 3 | RX (ESP → pump) | TX pin (GPIO 17) | TX pin (GPIO 1) |
-| 4 | NC | Not connected | Not connected |
-| 5 | GND | GND | GND |
+| X10A Pin | Signal | ESP32 DevKit | M5Stack AtomS3 Lite / ESP32-S3 | M5StickC Plus2 |
+| -- | -- | -- | -- | -- |
+| 1 | 5V | 5V / VIN | 5V | 5V (via Grove) |
+| 2 | TX (pump → ESP) | RX pin (GPIO 16) | RX pin (GPIO 2) | RX pin (GPIO 32 / G32) |
+| 3 | RX (ESP → pump) | TX pin (GPIO 17) | TX pin (GPIO 1) | TX pin (GPIO 33 / G33) |
+| 4 | NC | Not connected | Not connected | Not connected |
+| 5 | GND | GND | GND | GND (via Grove) |
 
 > **Note:** The heat pump's TX connects to the ESP's RX, and vice versa (crossover).
+
+> **M5StickC Plus2 Note:** Use the Grove HY2.0-4P connector on the side of the device. Pin order: GND, 5V, G32, G33. Connect X10A via a Grove-to-Dupont cable with a **level shifter** between X10A (5V) and M5StickC Plus2 GPIO pins (3.3V).
 
 Refer to the [ESPAltherma wiring guide](https://github.com/raomin/ESPAltherma?tab=readme-ov-file#daikin-altherma-4-pin-x10a-connection) for additional details and photos.
 
@@ -75,12 +78,12 @@ Refer to the [ESPAltherma wiring guide](https://github.com/raomin/ESPAltherma?ta
 | M5-Stack Basic         | ERGA08DAV3 / EHVH08S23DA6V               | @jjohnsen | This repo ;)
 | M5Stack AtomS3 Lite    | DAIKIN Altherma 3 R Ech2o / EHSXB08P30EF | @maromme  | https://github.com/jjohnsen/esphome-altherma/discussions/4
 | DOIT ESP32 DEVKIT V1   | EHVX08S26CB9W                            | @MaBeniu  | https://github.com/jjohnsen/esphome-altherma/discussions/5
-| esp32dev | ERLQ011CAV3 / EHBX11CB9W || [Detailed setup guide in French](https://domo.rem81.com/index.php/2026/01/12/ha-monitoring-de-ma-pac-daikin-altherma-avec-esphome-esphome-altherma-alternative-a-espaltherma/)
+| esp32dev | ERLQ011CAV3 / EHBX11CB9W || [Detailed setup guide in French](https://domo.rem81.com/index.php/2026/01/12/ha-monitoring-de-ma-pac-daikin-altherma-avec-esphome-esphome-altherma-alternat[...]
 | ESP32-C6-WROOM-1       | EHBH16C9W                         | @AndriesMuylaert | Includes relay + onboard sensors - https://github.com/jjohnsen/esphome-altherma/discussions/11
 
 ## Installation
 
-> **⚠️ Note:** This repo currently includes sensor mappings for the **ERGA-D EHV/EHB/EHVZ DA series (04-08kW)** and the **ERLA D EBSH-X 16P30-50 D series 11-16kW-ECH2O**. Contributions for other models are welcome!
+> **⚠️ Note:** This repo currently includes sensor mappings for the **ERGA-D EHV/EHB/EHVZ DA series (04-08kW)** and the **ERLA D EBSH-X 16P30-50 D series 11-16kW-ECH2O**. Contributions for oth[...]
 
 ### Option 1: Browser Install (ESP Web Tools)
 
@@ -136,6 +139,7 @@ Choose the YAML file matching your board:
 - `esphome-altherma-esp32.yaml` - Generic ESP32
 - `esphome-altherma-esp32-s3.yaml` - ESP32-S3 DevKit
 - `esphome-altherma-atoms3.yaml` - M5Stack AtomS3 Lite
+- `esphome-altherma-m5stickc-plus2.yaml` - M5StickC Plus2
 
 Each includes `base.yaml` (shared component setup) and the model config from `confs/`.
 
@@ -148,7 +152,7 @@ Each includes `base.yaml` (shared component setup) and the model config from `co
 
 > ⚠️ **This is an experimental feature, use at your own risk.**
 
-The component exposes a `query_register` Home Assistant action (service) that lets you query any register directly. This is useful for exploring what data your specific heat pump model supports, which you can then turn into proper sensor definitions.
+The component exposes a `query_register` Home Assistant action (service) that lets you query any register directly. This is useful for exploring what data your specific heat pump model supports, [...]
 
 ![Home Assistant Developer tools calling action query_register with register, offset, convid, and datasize fields](img/home-assistant-query-register-action-form.png)
 
@@ -163,7 +167,7 @@ The component exposes a `query_register` Home Assistant action (service) that le
 
 The result is published to the **Manual Query Registry Result** text sensor and also appears in the ESPHome device logs.
 
-![Home Assistant Manual Query Registry Result entity showing accepted, failed, and successful query states with full response buffer](img/home-assistant-manual-query-registry-result-state-history.png)
+![Home Assistant Manual Query Registry Result entity showing accepted, failed, and successful query states with full response buffer](img/home-assistant-manual-query-registry-result-state-history[...]
 
 ### Example: Home Assistant action call
 
@@ -217,6 +221,7 @@ base.yaml                          # Shared ESPHome config (logger, API, OTA, UA
 esphome-altherma-esp32.yaml        # Board config: ESP32 DevKit
 esphome-altherma-esp32-s3.yaml     # Board config: ESP32-S3
 esphome-altherma-atoms3.yaml       # Board config: M5Stack AtomS3 Lite
+esphome-altherma-m5stickc-plus2.yaml  # Board config: M5StickC Plus2
 confs/
   erga_eh_da_04_08.yaml            # Sensor definitions for ERGA-D series
   erla_d_ebsh_11_16_ech2o.yaml     # Sensor definitions for ERLA D EBSH-X 11-16kW-ECH2O
