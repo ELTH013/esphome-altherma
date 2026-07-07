@@ -1,0 +1,16 @@
+packages:
+  base: !include base.yaml
+
+esp32:
+  board: m5stack-m5stickc-plus2
+  framework:
+    type: esp-idf
+
+uart:
+  id: uart_bus
+  tx_pin: GPIO33
+  rx_pin: GPIO32
+  baud_rate: 9600
+  data_bits: 8
+  parity: EVEN
+  stop_bits: 1
