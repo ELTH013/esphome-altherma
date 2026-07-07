@@ -1,16 +1,339 @@
-packages:
-  base: !include base.yaml
+esphome:
+  name: esphome-altherma
+  friendly_name: ESPHome Altherma
+  # Automatically add the mac address to the name
+  # so you can use a single firmware for all devices
+  name_add_mac_suffix: true
+  # Uncomment below for using mock uart during development:
+  #platformio_options:
+  #  build_flags:
+  #    - -DUSE_MOCK_UART
 
+# M5StickC Plus2 board configuration
 esp32:
   board: m5stack-m5stickc-plus2
   framework:
     type: esp-idf
 
+# To be able to get logs from the device via serial and api.
+logger:
+
+# API is a requirement of the dashboard import.
+api:
+  custom_services: true
+
+# OTA is required for Over-the-Air updating
+ota:
+  - platform: esphome
+
+wifi:
+  # Set up a wifi access point using the device name above
+  ap:
+
+# In combination with the `ap` this allows the user
+# to provision wifi credentials to the device.
+captive_portal:
+
+# M5StickC Plus2 specific UART pins via Grove connector
+# Grove HY2.0-4P connector on side: GND, 5V, G32, G33
+# X10A connection: Pin1=5V, Pin2=TX, Pin3=RX, Pin4=NC, Pin5=GND
 uart:
   id: uart_bus
-  tx_pin: GPIO33
-  rx_pin: GPIO32
+  tx_pin: GPIO33  # G33 on Grove connector (M5StickC Plus2)
+  rx_pin: GPIO32  # G32 on Grove connector (M5StickC Plus2)
   baud_rate: 9600
   data_bits: 8
   parity: EVEN
   stop_bits: 1
+
+external_components:
+# Uncomment below if you want to "Take Control" in ESPHome Device Builder
+#   - source: github://jjohnsen/esphome-altherma@main
+#     components: [altherma_hub]
+# Comment below if you want to "Take Control" in ESPHome Device Builder
+  - source:
+      type: local
+      path: components
+
+altherma_hub:
+  id: altherma_hub_1
+  uart_id: uart_bus
+  update_interval: 30s
+  query_result_text_sensor: query_registry_result
+
+text_sensor:
+  - platform: template
+    name: "Manual Query Registry Result"
+    id: query_registry_result
+    entity_category: diagnostic
+
+# Sensor definitions for ERGA-D EHV/EHB/EHVZ DA series (04-08kW)
+# Anchors for sensor templates
+.altherma_base: &altherma_base
+  platform: altherma_hub
+  altherma_hub_id: altherma_hub_1
+
+.temp: &temp
+  <<: *altherma_base
+  device_class: temperature
+  unit_of_measurement: °C
+  state_class: measurement
+  accuracy_decimals: 1
+
+.binary: &binary
+  <<: *altherma_base
+
+.current: &current
+  <<: *altherma_base
+  device_class: current
+  unit_of_measurement: A
+  icon: mdi:current-ac
+  state_class: measurement
+  accuracy_decimals: 1  
+
+.voltage: &voltage
+  <<: *altherma_base
+  device_class: voltage
+  unit_of_measurement: V
+  state_class: measurement
+
+.rps: &rps
+  <<: *altherma_base
+  unit_of_measurement: rps
+  state_class: measurement
+
+.rpm: &rpm
+  <<: *altherma_base
+  unit_of_measurement: rpm
+  state_class: measurement
+
+.text: &text
+  <<: *altherma_base
+
+sensor:
+  - <<: *temp
+    name: Outdoor air temp. (R1T)
+    register: 0x20
+    offset: 0
+    convid: 105
+    datasize: 2
+  - <<: *temp
+    name: Discharge pipe temp.
+    register: 0x20
+    offset: 4
+    convid: 105
+    datasize: 2
+    entity_category: diagnostic
+  - <<: *temp
+    name: Heat exchanger mid-temp.
+    register: 0x20
+    offset: 8
+    convid: 105
+    datasize: 2
+    entity_category: diagnostic
+  - <<: *temp
+    name: Heat sink temp.
+    register: 0x20
+    offset: 12
+    convid: 105
+    datasize: 2
+  - <<: *current
+    name: INV primary current (A)
+    register: 0x21
+    offset: 0
+    convid: 105
+    datasize: 2
+  - <<: *current
+    name: INV secondary current (A)
+    register: 0x21
+    offset: 2
+    convid: 105
+    datasize: 2
+  - <<: *voltage
+    name: Voltage (N-phase) (V)
+    register: 0x21
+    offset: 4
+    convid: 101
+    datasize: 2
+
+  - <<: *rps
+    name: INV frequency (rps)
+    register: 0x30
+    offset: 0
+    convid: 152
+    datasize: 1
+  - <<: *rpm
+    name: Fan 1 (10 rpm)
+    register: 0x30
+    offset: 0
+    convid: 211
+    datasize: 1
+    filters:
+      - multiply: 10
+  - <<: *rpm
+    name: Fan 2 (step)
+    register: 0x30
+    offset: 1
+    convid: 211
+    datasize: 1
+
+  - <<: *temp
+    name: DHW setpoint
+    register: 0x60
+    offset: 7
+    convid: 105
+    datasize: 2
+  - <<: *temp
+    name: LW setpoint (main)
+    register: 0x60
+    offset: 9
+    convid: 105
+    datasize: 2
+  - <<: *temp
+    name: Leaving water temp. before BUH (R1T)
+    register: 0x61
+    offset: 2
+    convid: 105
+    datasize: 2
+  - <<: *temp
+    name: Leaving water temp. after BUH (R2T)
+    register: 0x61
+    offset: 4
+    convid: 105
+    datasize: 2
+  - <<: *temp
+    name: Refrig. Temp. liquid side (R3T)
+    register: 0x61
+    offset: 6
+    convid: 105
+    datasize: 2
+  - <<: *temp
+    name: Inlet water temp. (R4T)
+    register: 0x61
+    offset: 8
+    convid: 105
+    datasize: 2
+  - <<: *temp
+    name: DHW tank temp. (R5T)
+    register: 0x61
+    offset: 10
+    convid: 105
+    datasize: 2
+  - <<: *temp
+    name: Indoor ambient temp. (R1T)
+    register: 0x61
+    offset: 12
+    convid: 105
+    datasize: 2
+  - <<: *altherma_base
+    name: Flow sensor (l⁄min)
+    register: 0x62
+    offset: 9
+    convid: 105
+    datasize: 2
+    unit_of_measurement: l/min
+    state_class: measurement
+    accuracy_decimals: 1
+  - <<: *altherma_base
+    name: Water pressure (bar)
+    register: 0x62
+    offset: 11
+    convid: 105
+    datasize: 1
+    device_class: pressure
+    unit_of_measurement: bar
+    state_class: measurement
+    accuracy_decimals: 1
+  - <<: *altherma_base
+    name: "Water pump signal (0:max-100:stop)"
+    register: 0x62
+    offset: 12
+    convid: 152
+    datasize: 1
+    accuracy_decimals: 0
+
+binary_sensor:
+  - <<: *binary
+    name: Defrost Operation
+    register: 0x10
+    offset: 1
+    convid: 304
+    datasize: 1
+  - <<: *binary
+    name: Thermostat ON⁄OFF
+    device_class: running
+    register: 0x60
+    offset: 2
+    convid: 303
+    datasize: 1
+  - <<: *binary
+    name: Freeze Protection
+    device_class: cold
+    register: 0x60
+    offset: 2
+    convid: 302
+    datasize: 1
+  - <<: *binary
+    name: Silent Mode
+    device_class: sound
+    register: 0x60
+    offset: 2
+    convid: 301
+    datasize: 1
+  - <<: *binary
+    name: 3way valve(On:DHW_Off:Space)
+    register: 0x60
+    offset: 12
+    convid: 306
+    datasize: 1
+  - <<: *binary
+    name: BSH
+    register: 0x60
+    offset: 12
+    convid: 305
+    datasize: 1
+  - <<: *binary
+    name: BUH Step1
+    register: 0x60
+    offset: 12
+    convid: 304
+    datasize: 1
+  - <<: *binary
+    name: BUH Step2
+    register: 0x60
+    offset: 12
+    convid: 303
+    datasize: 1
+  - <<: *binary
+    name: Powerful DHW Operation. ON⁄OFF
+    register: 0x62
+    offset: 2
+    convid: 304
+    datasize: 1
+
+text_sensor:
+  - <<: *text
+    name: I⁄U operation mode
+    icon: mdi:state-machine
+    register: 0x60
+    offset: 2
+    convid: 315
+    datasize: 1
+  - <<: *text
+    name: Error Code
+    register: 0x60
+    offset: 3
+    convid: 204
+    datasize: 1
+  - <<: *text
+    name: Error detailed code
+    register: 0x60
+    offset: 4
+    convid: 152
+    datasize: 1
+  - <<: *text
+    name: Error type
+    register: 0x60
+    offset: 5
+    convid: 203
+    datasize: 1
