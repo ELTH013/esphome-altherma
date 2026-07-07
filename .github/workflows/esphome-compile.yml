@@ -1,0 +1,66 @@
+name: ESPHome Compile
+
+on:
+  push:
+    branches:
+      - main
+      - feature/m5stickc-plus2
+    paths:
+      - '*.yaml'
+      - 'confs/**'
+      - 'components/**'
+      - '.github/workflows/esphome-compile.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '*.yaml'
+      - 'confs/**'
+      - 'components/**'
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        device:
+          - file: esphome-altherma-m5stickc-plus2.yaml
+            name: m5stickc-plus2
+          - file: esphome-altherma-esp32.yaml
+            name: esp32-devkit
+          - file: esphome-altherma-esp32-s3.yaml
+            name: esp32-s3
+          - file: esphome-altherma-atoms3.yaml
+            name: atom-s3
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install ESPHome
+        run: pip install esphome
+
+      - name: Compile ESPHome firmware
+        run: esphome compile ${{ matrix.device.file }}
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: firmware-${{ matrix.device.name }}
+          path: .esphome/build/**/firmware.bin
+          retention-days: 30
+
+      - name: Upload compilation failure logs
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-logs-${{ matrix.device.name }}
+          path: .esphome/build/**/
+          retention-days: 7
