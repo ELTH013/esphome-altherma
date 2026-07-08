@@ -61,12 +61,6 @@ altherma_hub:
   update_interval: 30s
   query_result_text_sensor: query_registry_result
 
-text_sensor:
-  - platform: template
-    name: "Manual Query Registry Result"
-    id: query_registry_result
-    entity_category: diagnostic
-
 # Sensor definitions for ERGA-D EHV/EHB/EHVZ DA series (04-08kW)
 # Anchors for sensor templates
 .altherma_base: &altherma_base
@@ -312,6 +306,10 @@ binary_sensor:
     datasize: 1
 
 text_sensor:
+  - platform: template
+    name: "Manual Query Registry Result"
+    id: query_registry_result
+    entity_category: diagnostic
   - <<: *text
     name: I⁄U operation mode
     icon: mdi:state-machine
