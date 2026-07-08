@@ -11,7 +11,7 @@ esphome:
 
 # M5StickC Plus2 board configuration
 esp32:
-  board: m5stack-m5stickc-plus2
+  board: esp32dev
   framework:
     type: esp-idf
 
