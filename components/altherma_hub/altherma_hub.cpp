@@ -1,7 +1,7 @@
 #include "altherma_hub.h"
 #include "esphome/core/log.h"
 #include "mock_uart.h"
-#include "lib/labeldef.h"
+#include "labeldef.h"
 #include <cstdarg>
 #include <cstdio>
 LabelDef labelDefs[] = {};
@@ -25,7 +25,7 @@ LabelDef labelDefs[] = {};
 //}
 namespace esphome {
 namespace altherma_hub {
-  #include "lib/converters.h"
+  #include "converters.h"
 
 static const char *TAG = "altherma_hub";
 
