@@ -25,7 +25,7 @@ LabelDef labelDefs[] = {};
 //}
 namespace esphome {
 namespace altherma_hub {
-  #include "converters.h"
+  #include "lib/converters.h"
 
 static const char *TAG = "altherma_hub";
 
