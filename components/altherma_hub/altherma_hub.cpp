@@ -1,7 +1,7 @@
 #include "altherma_hub.h"
 #include "esphome/core/log.h"
 #include "mock_uart.h"
-#include "labeldef.h"
+#include "lib/labeldef.h"
 #include <cstdarg>
 #include <cstdio>
 LabelDef labelDefs[] = {};
