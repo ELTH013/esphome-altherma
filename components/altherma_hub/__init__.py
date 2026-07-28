@@ -39,11 +39,16 @@ async def to_code(config):
 
     # Get the absolute path to the lib directory
     lib_path = Path(__file__).parent / "lib"
+
+print("ALTHERMA LIB =", lib_path)
+print("ALTHERMA EXISTS =", lib_path.exists())
+
+cg.add_platformio_option(
+    "build_flags",
+    [f"-I{lib_path.as_posix()}"]
+)
+
     
-    # Add as extra script to copy files
-    cg.add_platformio_option("build_flags", [f"-I{lib_path.as_posix()}"])
-
-
 # Shared configuration constants
 CONF_HUB_ID = "altherma_hub_id"
 CONF_REGISTER = "register"
