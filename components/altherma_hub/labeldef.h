@@ -1,7 +1,8 @@
+#pragma once
+
 #ifdef ARDUINO
 #include <pgmspace.h>
 #endif
-#define LABELDEF
 
 class LabelDef
 {
