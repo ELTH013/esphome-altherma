@@ -1,50 +1,16 @@
 // convert read registry value to the expected format based on convID
+#pragma once
+
+#include "labeldef.h"
+#include <math.h>
 #include <string.h>
-char buff[64];
+
+namespace esphome {
+namespace altherma_hub {
+
 class Converter
 {
 public:
-    void getLabels(char registryID, LabelDef *ret[], int &num)
-    {
-        num = 0;
-        for (auto &&label : labelDefs)
-        {
-            if (label.registryID == registryID)
-            {
-                ret[num++] = &label;
-            }
-        }
-    }
-
-    // Extract all values from the registry data response
-    void readRegistryValues(unsigned char *data, unsigned char protocol)
-    {
-        if (protocol == 'S')
-        {
-            // Registry ID is first byte
-            readRegistryValues(data[0], data, 1);
-        }
-        else
-        {
-            readRegistryValues(data[1], data, 3);
-        }
-    }
-
-    void readRegistryValues(char registryID, unsigned char *data, unsigned int offset)
-    {
-        // Serial.printf("For registry %d, we have these labels:\n", registryID);
-        int num = 0;
-        LabelDef *labels[128];
-        getLabels(registryID, labels, num);
-
-        for (int i = 0; i < num; i++)
-        {
-            unsigned char *input = data;
-            input += labels[i]->offset + offset;
-            convert(labels[i], input);
-        }
-    }
-
     double convertPress2Temp(double data){//assuming R32 gaz
         	double num = -2.6989493795556E-07 * data * data * data * data * data * data;
 			double num2 = 4.26383417104661E-05 * data * data * data * data * data;
@@ -56,19 +22,12 @@ public:
 			return num + num2 + num3 + num4 + num5 + num6 + num7;
     }
 
-
-
     void convert(LabelDef *def, unsigned char *data)
     {
         def->asString[0] = {0};
         int convId = def->convid;
         int num = def->dataSize;
         double dblData = NAN;
-        Serial.print("Converting from:");
-        for (int i = 0; i < num; i++)
-        {
-            Serial.printf(" 0x%02x ", data[i]);
-        }
 
         switch (convId)
         {
@@ -89,7 +48,6 @@ public:
             break;
         case 105:
             dblData = (double)getSignedValue(data, num, 0) * 0.1;
-            // Serial.printf("%f\n", dblData);
             break;
         case 106:
             dblData = (double)getSignedValue(data, num, 1) * 0.1;
@@ -300,13 +258,11 @@ public:
         {
             sprintf(def->asString, "%g", dblData);
         }
-        Serial.printf("-> %s\n", def->asString);
     }
 
 private:
     void convertTable300(unsigned char *data, int tableID, char *ret)
     {
-        Serial.printf("Bin Conv %02x with tableID %d \n", data[0], tableID);
         char b = 1;
         b = (char)(b << tableID % 10);
         if ((data[0] & b) > 0)
@@ -360,7 +316,6 @@ private:
         {
             dblData *= -1.0;
         }
-        // Serial.printf("convertTable312 %02x -> %f \n", data[0], dblData);
         return dblData;
     }
     
@@ -482,3 +437,6 @@ private:
         return result;
     }
 };
+
+}  // namespace altherma_hub
+}  // namespace esphome
