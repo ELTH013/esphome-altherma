@@ -158,37 +158,37 @@ sensor:
     name: Leaving water temp. before BUH (R1T)
     register: 0x61
     offset: 2
-    convid: 105
+    convid: 106
     datasize: 2
   - <<: *temp
     name: Leaving water temp. after BUH (R2T)
     register: 0x61
     offset: 4
-    convid: 105
+    convid: 106
     datasize: 2
   - <<: *temp
     name: Refrig. Temp. liquid side (R3T)
     register: 0x61
     offset: 6
-    convid: 105
+    convid: 106
     datasize: 2
   - <<: *temp
     name: Inlet water temp. (R4T)
     register: 0x61
     offset: 8
-    convid: 105
+    convid: 106
     datasize: 2
   - <<: *temp
     name: DHW tank temp. (R5T)
     register: 0x61
     offset: 10
-    convid: 105
+    convid: 106
     datasize: 2
   - <<: *temp
     name: Indoor ambient temp. (R1T)
     register: 0x61
     offset: 12
-    convid: 105
+    convid: 106
     datasize: 2
   # - <<: *temp
   #   name: Ext. indoor ambient sensor (R6T)
