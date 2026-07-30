@@ -1,0 +1,172 @@
+# Sensor mapping for Daikin Altherma 3 LT split-unit (EHBH series, 04-08 kW)
+# Verified against DMMT register layout for EHBH08EF6V indoor unit.
+#
+# Register 0x21 layout for EHBH (differs from ERGA/EHV DA series):
+#   Offset 0 (2 bytes): Leaving water temperature (before backup heater)
+#   Offset 3 (2 bytes): Return water temperature
+#   Offset 4 (2 bytes): Outdoor air temperature
+#   Offset 5 (1 byte):  Compressor frequency
+#
+# Register 0x22 layout:
+#   Offset 0 (2 bytes): DHW tank temperature
+#
+# NOTE on byte order: All 16-bit temperatures use convid 105 (little-endian
+# signed int16 × 0.1 = °C).  If readings are still ~256× wrong (e.g. 1800 °C
+# instead of 18 °C), switch every temperature convid from 105 to 106 (big-endian).
+
+# anchors
+.altherma_base: &altherma_base
+  platform: altherma_hub
+  altherma_hub_id: altherma_hub_1
+
+.temp: &temp
+  <<: *altherma_base
+  device_class: temperature
+  unit_of_measurement: °C
+  state_class: measurement
+  accuracy_decimals: 1
+
+.binary: &binary
+  <<: *altherma_base
+
+.pressure: &pressure
+  <<: *altherma_base
+  device_class: pressure
+  unit_of_measurement: bar
+  state_class: measurement
+  accuracy_decimals: 1
+
+.text: &text
+  <<: *altherma_base
+
+sensor:
+  # --- Register 0x21: temperatures (EHBH layout) ---
+  - <<: *temp
+    name: Leaving Water Temperature
+    register: 0x21
+    offset: 0
+    convid: 105
+    datasize: 2
+
+  - <<: *temp
+    name: Return Water Temperature
+    register: 0x21
+    offset: 3
+    convid: 105
+    datasize: 2
+
+  - <<: *temp
+    name: Outdoor Air Temperature
+    register: 0x21
+    offset: 4
+    convid: 105
+    datasize: 2
+
+  - <<: *altherma_base
+    name: Compressor Frequency
+    register: 0x21
+    offset: 5
+    convid: 152
+    datasize: 1
+    unit_of_measurement: Hz
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # --- Register 0x22: DHW ---
+  - <<: *temp
+    name: DHW Tank Temperature
+    register: 0x22
+    offset: 0
+    convid: 105
+    datasize: 2
+
+  # --- Register 0x60: setpoints ---
+  - <<: *temp
+    name: DHW Setpoint
+    register: 0x60
+    offset: 7
+    convid: 105
+    datasize: 2
+
+  - <<: *temp
+    name: Leaving Water Setpoint Main
+    register: 0x60
+    offset: 9
+    convid: 105
+    datasize: 2
+
+  # --- Register 0x62: hydraulics ---
+  - <<: *pressure
+    name: Water Pressure
+    register: 0x62
+    offset: 11
+    convid: 105
+    datasize: 1
+
+binary_sensor:
+  - <<: *binary
+    name: Defrost Operation
+    register: 0x10
+    offset: 1
+    convid: 304
+    datasize: 1
+
+  - <<: *binary
+    name: Thermostat ON/OFF
+    device_class: running
+    register: 0x60
+    offset: 2
+    convid: 303
+    datasize: 1
+
+  - <<: *binary
+    name: 3way valve (DHW/Space)
+    register: 0x60
+    offset: 12
+    convid: 306
+    datasize: 1
+
+  - <<: *binary
+    name: Backup Heater Step1
+    register: 0x60
+    offset: 12
+    convid: 304
+    datasize: 1
+
+  - <<: *binary
+    name: Backup Heater Step2
+    register: 0x60
+    offset: 12
+    convid: 303
+    datasize: 1
+
+text_sensor:
+  - <<: *text
+    name: Operation Mode
+    icon: mdi:heat-pump
+    register: 0x10
+    offset: 0
+    convid: 217
+    datasize: 1
+
+  - <<: *text
+    name: I/U Operation Mode
+    icon: mdi:state-machine
+    register: 0x60
+    offset: 2
+    convid: 315
+    datasize: 1
+
+  - <<: *text
+    name: Error Code
+    register: 0x60
+    offset: 3
+    convid: 204
+    datasize: 1
+
+  - <<: *text
+    name: Error Type
+    register: 0x60
+    offset: 5
+    convid: 203
+    datasize: 1

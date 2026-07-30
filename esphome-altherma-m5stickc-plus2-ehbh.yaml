@@ -1,0 +1,251 @@
+esphome:
+  name: esphome-altherma-dj013
+  friendly_name: ESPhome-Altherma-DJ013
+  build_path: /config/esphome/build_dj013
+
+esp32:
+  variant: esp32
+
+logger:
+
+api:
+  custom_services: true
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  ap:
+    ssid: ESPhome-Altherm Fallback Hotspot
+    password: !secret ap_password
+
+captive_portal:
+
+external_components:
+  - source: github://ELTH013/esphome-altherma@feature/m5stickc-plus2
+    components: [altherma_hub]
+
+uart:
+  id: uart_bus
+  tx_pin: GPIO33
+  rx_pin: GPIO32
+  baud_rate: 9600
+  data_bits: 8
+  parity: EVEN
+  stop_bits: 1
+
+altherma_hub:
+  id: altherma_hub_1
+  uart_id: uart_bus
+  update_interval: 30s
+
+output:
+  - platform: ledc
+    id: builtin_led
+    inverted: true
+    pin: 10
+
+  - platform: ledc
+    id: backlight
+    inverted: true
+    pin: 27
+
+  - platform: ledc
+    id: buzzer
+    inverted: true
+    pin: 2
+
+light:
+  - platform: monochromatic
+    id: led1
+    name: Led
+    output: builtin_led
+
+  - platform: monochromatic
+    id: display_bl
+    name: Backlight
+    output: backlight
+
+i2c:
+  - id: bus_a
+    scan: true
+    scl: 22
+    sda: 21
+
+i2s_audio:
+  - i2s_bclk_pin: 0
+    i2s_lrclk_pin: 26
+    id: bus_i2s
+
+binary_sensor:
+  - platform: gpio
+    id: binary_sensor_gpio_1
+    name: Button A
+    pin:
+      inverted: false
+      number: 37
+
+  - platform: gpio
+    id: binary_sensor_gpio_2
+    name: Button B
+    pin:
+      inverted: true
+      number: 39
+
+microphone:
+  - platform: i2s_audio
+    adc_type: external
+    i2s_din_pin: 34
+    id: mic
+    pdm: true
+
+sensor:
+  - platform: adc
+    attenuation: 12db
+    id: sensor_adc_1
+    name: Battery Voltage
+    pin: 38
+    update_interval: 60s
+
+  - platform: mpu6886
+    address: 104
+    id: sensor_mpu6886_1
+    update_interval: 10s
+
+  # --- Outdoor Air Temperature ---
+  # EHBH layout: Register 0x21, Offset 4 (2 bytes, signed int16 × 0.1 °C)
+  # Previously incorrect: Register 0x20, Offset 0 (ERGA/EHV DA layout).
+  - platform: altherma_hub
+    altherma_hub_id: altherma_hub_1
+    name: Outdoor Air Temperature
+    register: 0x21
+    offset: 4
+    convid: 105
+    datasize: 2
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    accuracy_decimals: 1
+
+  # --- Water Pressure ---
+  # Register 0x62, Offset 11 — 1 byte, value × 0.1 = bar.  Unchanged.
+  - platform: altherma_hub
+    altherma_hub_id: altherma_hub_1
+    name: Water Pressure
+    register: 0x62
+    offset: 11
+    convid: 105
+    datasize: 1
+    device_class: pressure
+    unit_of_measurement: "bar"
+    state_class: measurement
+    accuracy_decimals: 1
+
+  # --- DHW Setpoint ---
+  # Register 0x60, Offset 7 — 2 bytes, signed int16 × 0.1 °C.  Unchanged.
+  - platform: altherma_hub
+    altherma_hub_id: altherma_hub_1
+    name: DHW Setpoint
+    register: 0x60
+    offset: 7
+    convid: 105
+    datasize: 2
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    accuracy_decimals: 1
+
+  # --- Leaving Water Setpoint Main ---
+  # Register 0x60, Offset 9 — 2 bytes, signed int16 × 0.1 °C.  Unchanged.
+  - platform: altherma_hub
+    altherma_hub_id: altherma_hub_1
+    name: Leaving Water Setpoint Main
+    register: 0x60
+    offset: 9
+    convid: 105
+    datasize: 2
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    accuracy_decimals: 1
+
+  # --- DHW Tank Temperature ---
+  # EHBH layout: Register 0x22, Offset 0 (2 bytes, signed int16 × 0.1 °C).
+  # Previously incorrect: Register 0x61, Offset 0 — read the R5T sentinel byte
+  # [0x80, 0x00] as little-endian 128 × 0.1 = 12.8 °C instead of the real value.
+  - platform: altherma_hub
+    altherma_hub_id: altherma_hub_1
+    name: DHW Tank Temperature
+    register: 0x22
+    offset: 0
+    convid: 105
+    datasize: 2
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    accuracy_decimals: 1
+
+  # --- Leaving Water Temperature (before backup heater) ---
+  # EHBH layout: Register 0x21, Offset 0 (2 bytes, signed int16 × 0.1 °C).
+  # Previously incorrect: Register 0x61, Offset 3 — returned 1868.9 °C due to
+  # misaligned bytes from a different data field.
+  - platform: altherma_hub
+    altherma_hub_id: altherma_hub_1
+    name: Leaving Water Temperature
+    register: 0x21
+    offset: 0
+    convid: 105
+    datasize: 2
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    accuracy_decimals: 1
+
+  # --- Return Water Temperature ---
+  # EHBH layout: Register 0x21, Offset 3 (2 bytes, signed int16 × 0.1 °C).
+  # Previously incorrect: Register 0x61, Offset 4.
+  - platform: altherma_hub
+    altherma_hub_id: altherma_hub_1
+    name: Return Water Temperature
+    register: 0x21
+    offset: 3
+    convid: 105
+    datasize: 2
+    device_class: temperature
+    unit_of_measurement: "°C"
+    state_class: measurement
+    accuracy_decimals: 1
+
+  # --- Compressor Frequency ---
+  # Register 0x21, Offset 5 — 1 unsigned byte = frequency in Hz.
+  # Changed convid: 307 (bit-field ON/OFF) → 152 (unsigned byte, numeric) so the
+  # sensor publishes an actual Hz value instead of a non-numeric string.
+  - platform: altherma_hub
+    altherma_hub_id: altherma_hub_1
+    name: Compressor Frequency
+    register: 0x21
+    offset: 5
+    convid: 152
+    datasize: 1
+    unit_of_measurement: "Hz"
+    state_class: measurement
+    accuracy_decimals: 0
+
+text_sensor:
+  - platform: template
+    name: "Manual Query Registry Result"
+    id: query_registry_result
+
+  - platform: altherma_hub
+    altherma_hub_id: altherma_hub_1
+    name: Operation Mode
+    register: 0x10
+    offset: 0
+    convid: 217
+    datasize: 1
