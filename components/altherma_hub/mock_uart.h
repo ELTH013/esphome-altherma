@@ -76,6 +76,21 @@ namespace esphome
                         0x23, 0x91, 0x82, 0x00, 0x17
                     };
                     break;
+
+                case 0x61:
+                    // Big-endian 16-bit temperatures (convid 106):
+                    // offset 2-3:  R1T LWT before BUH  34.8°C  [0x01, 0x5C]
+                    // offset 4-5:  R2T LWT after BUH   36.5°C  [0x01, 0x6D]
+                    // offset 6-7:  R3T refrig liquid   25.0°C  [0x00, 0xFA]
+                    // offset 8-9:  R4T inlet water     32.0°C  [0x01, 0x40]
+                    // offset 10-11: R5T DHW tank       50.0°C  [0x01, 0xF4]
+                    // offset 12-13: indoor ambient     21.0°C  [0x00, 0xD2]
+                    response = {
+                        0x40, 0x61, 0x10, 0x00, 0x00, 0x01, 0x5C, 0x01,
+                        0x6D, 0x00, 0xFA, 0x01, 0x40, 0x01, 0xF4, 0x00,
+                        0xD2, 0x81
+                    };
+                    break;
                     
 
                 case 0x21:
