@@ -1,8 +1,15 @@
 # Mapping for ERLA D EBSH-X 16P30-50 D series 11-16kW-ECH2O systems.
-# Verified against the user's support/registers + support/sensors export and
-# cross-checked with the upstream ESPAltherma model definition that best matches
-# EBSXB16P50DF:
+# Cross-checked with the upstream ESPAltherma model definition:
 # https://github.com/raomin/ESPAltherma/blob/main/include/def/Altherma(ERLA%20D%20EBSH-X%2016P30-50%20D%20SERIES%2011-16kW-ECH2O).h
+#
+# NOTE on byte order: The EBSH ECH2O unit sends 16-bit temperature values in
+# big-endian order (high byte first). All 2-byte temperature sensors therefore
+# use convid 106 (big-endian signed int16 × 0.1 = °C).
+# This is confirmed by live data: raw bytes [0x01, 0xC9] at offsets 2 and 8
+# decode to 45.7 °C with conv106, which is physically plausible (equalized water
+# circuit), while conv105 (little-endian) decodes those same bytes to −1407.9 °C.
+# The upstream definition file uses conv105, but that appears to be based on a
+# different hardware variant.
 
 # anchors
 .altherma_base: &altherma_base
@@ -40,36 +47,35 @@ sensor:
     name: Leaving water temp. before BUH (R1T)
     register: 0x61
     offset: 2
-    convid: 105
+    convid: 106
     datasize: 2
   - <<: *temp
     name: Outlet Water BUH Temp. (R2T)
     register: 0x61
     offset: 4
-    convid: 105
+    convid: 106
     datasize: 2
   - <<: *temp
     name: Refrig. Temp. liquid side (R3T)
     register: 0x61
     offset: 6
-    convid: 105
+    convid: 106
     datasize: 2
   - <<: *temp
     name: Inlet water temp.(R4T)
     register: 0x61
     offset: 8
-    convid: 105
+    convid: 106
     datasize: 2
   - <<: *temp
-    # convid 107: same as 105 (little-endian × 0.1) but returns "---" for the
-    # Daikin "sensor not connected" sentinel value (raw 0x8000 → -3276.8 °C).
-    # R5T is not wired in the ECH2O hydrobox, so the protocol returns [0x00,0x80]
-    # at this offset. Without the sentinel check this decoded to 12.8 °C via
-    # convid 106 (wrong byte order) or would decode to -3276.8 °C via convid 105.
+    # convid 108: big-endian signed int16 × 0.1, with sentinel check.
+    # R5T is not wired in the ECH2O hydrobox, so the protocol sends [0x00, 0x80]
+    # (big-endian representation of the "not connected" sentinel).
+    # conv108 detects this and returns "---" instead of 12.8 °C.
     name: DHW tank temp. (R5T)
     register: 0x61
     offset: 10
-    convid: 107
+    convid: 108
     datasize: 2
   - <<: *altherma_base
     name: Flow sensor (l⁄min)
