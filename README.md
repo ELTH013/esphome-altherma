@@ -185,6 +185,34 @@ The **Manual Query Registry Result** sensor updates after every call and shows o
 - `Manual query failed reg=0x..: <reason>`: failure with cause (timeout, CRC invalid, out-of-bounds, etc.)
 - `Manual query rejected: <reason>`: invalid parameters, not sent to device
 
+### Outdoor temperature troubleshooting (empirical workflow)
+
+If **Outdoor air temp.** stops tracking correctly (for example flattening near 25 °C), use the public register data as a shortlist and validate on your own unit.
+
+**Current default mapping (ERGA-D):**
+- `register: 0x20`
+- `offset: 0`
+- `convid: 105`
+- `datasize: 2`
+
+**Shortlist to test first (same register block, nearby offsets):**
+
+| Priority | register | offset | convid | datasize | Why |
+| -- | -- | -- | -- | -- | -- |
+| 1 | `0x20` | `0` | `105` | `2` | Current outdoor mapping (baseline) |
+| 2 | `0x20` | `2` | `105` | `2` | Nearby temperature slot in same block |
+| 3 | `0x20` | `6` | `105` | `2` | Nearby temperature slot in same block |
+| 4 | `0x20` | `10` | `105` | `2` | Nearby temperature slot in same block |
+
+Run each candidate at **3 moments** (morning, afternoon, evening) so at least one sample is above 25 °C.
+
+**Selection criteria**
+- Follows the Daikin outdoor trend across the day
+- No fixed ceiling around 25 °C
+- No unrealistic jumps
+
+After selecting the best candidate, update only that one sensor definition (`register`/`offset`/`convid`) and verify for 24 hours before considering it final.
+
 ## Development
 
 ### Setting Up a Dev Environment
