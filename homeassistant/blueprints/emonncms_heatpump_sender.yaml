@@ -32,6 +32,38 @@ blueprint:
         entity:
           domain: sensor
 
+    electricity_import_t1:
+      name: electricity_import_t1
+      description: Optional meter import tariff 1 (T1)
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+
+    electricity_import_t2:
+      name: electricity_import_t2
+      description: Optional meter import tariff 2 (T2)
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+
+    electricity_export_t1:
+      name: electricity_export_t1
+      description: Optional meter export tariff 1 (T1)
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+
+    electricity_export_t2:
+      name: electricity_export_t2
+      description: Optional meter export tariff 2 (T2)
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+
     # heatpump_elec:
     #   name: heatpump_elec
     #   description: Electric use in watts, typical ESPHome Altherma - Inverter Power
@@ -169,6 +201,10 @@ variables:
   emoncms_node: !input emoncms_node
   heatpump_primary_current: !input heatpump_primary_current
   heatpump_voltage: !input heatpump_voltage
+  electricity_import_t1: !input electricity_import_t1
+  electricity_import_t2: !input electricity_import_t2
+  electricity_export_t1: !input electricity_export_t1
+  electricity_export_t2: !input electricity_export_t2
   #heatpump_elec: !input heatpump_elec
   heatpump_flowT: !input heatpump_flowT
   heatpump_returnT: !input heatpump_returnT
@@ -225,6 +261,32 @@ actions:
         {# Add calculated elec after the loop #}
         {% if current is not none and voltage is not none %}
           {% set ns.d = dict(ns.d, **{'heatpump_elec': current * voltage}) %}
+        {% endif %}
+
+        {% set import_t1 = states(electricity_import_t1) | float(none) %}
+        {% set import_t2 = states(electricity_import_t2) | float(none) %}
+        {% if import_t1 is not none or import_t2 is not none %}
+          {% set ns.d = dict(
+            ns.d,
+            **{
+              'electricity_import_total':
+                (import_t1 if import_t1 is not none else 0) +
+                (import_t2 if import_t2 is not none else 0)
+            }
+          ) %}
+        {% endif %}
+
+        {% set export_t1 = states(electricity_export_t1) | float(none) %}
+        {% set export_t2 = states(electricity_export_t2) | float(none) %}
+        {% if export_t1 is not none or export_t2 is not none %}
+          {% set ns.d = dict(
+            ns.d,
+            **{
+              'electricity_export_total':
+                (export_t1 if export_t1 is not none else 0) +
+                (export_t2 if export_t2 is not none else 0)
+            }
+          ) %}
         {% endif %}
 
         {% set immersion = namespace(power=0) %}
